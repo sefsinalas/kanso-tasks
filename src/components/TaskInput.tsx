@@ -20,6 +20,7 @@ export const TaskInput: React.FC<TaskInputProps> = ({
   const [dueDate, setDueDate] = useState('');
   const [isSomeday, setIsSomeday] = useState(false);
   const [addToToday, setAddToToday] = useState(defaultAddToToday);
+  const [showNotes, setShowNotes] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -42,6 +43,7 @@ export const TaskInput: React.FC<TaskInputProps> = ({
       setDueDate('');
       setIsSomeday(false);
       setAddToToday(defaultAddToToday);
+      setShowNotes(false);
       setIsExpanded(false);
 
       if (onAdded) onAdded();
@@ -56,6 +58,7 @@ export const TaskInput: React.FC<TaskInputProps> = ({
       handleSubmit();
     } else if (e.key === 'Escape') {
       setIsExpanded(false);
+      setShowNotes(false);
     }
   };
 
@@ -74,7 +77,7 @@ export const TaskInput: React.FC<TaskInputProps> = ({
           <input
             ref={inputRef}
             type="text"
-            data-testid={defaultAddToToday ? "today-input" : "backlog-input"}
+            data-testid="task-input"
             value={title}
             onChange={e => setTitle(e.target.value)}
             onKeyDown={handleKeyDown}
@@ -95,16 +98,7 @@ export const TaskInput: React.FC<TaskInputProps> = ({
         </div>
 
         {isExpanded && (
-          <div className="mt-2.5 pt-2.5 border-t border-zinc-100 dark:border-zinc-800/60 space-y-2.5 animate-in fade-in duration-100">
-            {/* Notes textarea */}
-            <textarea
-              value={notes}
-              onChange={e => setNotes(e.target.value)}
-              placeholder="Notas opcionales (Markdown o texto)..."
-              rows={2}
-              className="w-full p-2 text-xs bg-zinc-50 dark:bg-zinc-900/50 rounded-xl border border-zinc-200/60 dark:border-zinc-800 text-zinc-800 dark:text-zinc-200 placeholder-zinc-400 focus:outline-none focus:ring-1 focus:ring-zinc-400"
-            />
-
+          <div className="mt-2.5 pt-2 border-t border-zinc-100 dark:border-zinc-800/60 space-y-2 animate-in fade-in duration-100">
             {/* Quick Action Badges */}
             <div className="flex flex-wrap items-center justify-between gap-2 text-xs">
               <div className="flex flex-wrap items-center gap-1.5">
@@ -119,21 +113,7 @@ export const TaskInput: React.FC<TaskInputProps> = ({
                   }`}
                 >
                   <Sun className="w-3.5 h-3.5" />
-                  {addToToday ? 'Agregando a Hoy' : '+ Hoy'}
-                </button>
-
-                {/* Someday toggle */}
-                <button
-                  type="button"
-                  onClick={() => setIsSomeday(!isSomeday)}
-                  className={`flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-medium transition-colors ${
-                    isSomeday
-                      ? 'bg-purple-500/15 text-purple-700 dark:text-purple-300 border border-purple-500/30'
-                      : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-200 dark:hover:bg-zinc-700'
-                  }`}
-                >
-                  <Archive className="w-3.5 h-3.5" />
-                  {isSomeday ? 'En Algún día' : 'Algún día'}
+                  {addToToday ? 'En Hoy' : '+ Hoy'}
                 </button>
 
                 {/* Due Date picker */}
@@ -156,12 +136,43 @@ export const TaskInput: React.FC<TaskInputProps> = ({
                     </button>
                   )}
                 </div>
+
+                {/* Someday toggle */}
+                <button
+                  type="button"
+                  onClick={() => setIsSomeday(!isSomeday)}
+                  className={`flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-medium transition-colors ${
+                    isSomeday
+                      ? 'bg-purple-500/15 text-purple-700 dark:text-purple-300 border border-purple-500/30'
+                      : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-200 dark:hover:bg-zinc-700'
+                  }`}
+                >
+                  <Archive className="w-3.5 h-3.5" />
+                  {isSomeday ? 'En Algún día' : 'Algún día'}
+                </button>
+
+                {/* Optional Note toggle */}
+                <button
+                  type="button"
+                  onClick={() => setShowNotes(!showNotes)}
+                  className={`flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-medium transition-colors ${
+                    showNotes || notes
+                      ? 'bg-blue-500/15 text-blue-700 dark:text-blue-300 border border-blue-500/30'
+                      : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-200 dark:hover:bg-zinc-700'
+                  }`}
+                >
+                  <FileText className="w-3.5 h-3.5" />
+                  <span>{showNotes || notes ? 'Con Nota' : '+ Nota'}</span>
+                </button>
               </div>
 
               <div className="flex items-center gap-1.5 ml-auto">
                 <button
                   type="button"
-                  onClick={() => setIsExpanded(false)}
+                  onClick={() => {
+                    setIsExpanded(false);
+                    setShowNotes(false);
+                  }}
                   className="px-2.5 py-1 text-xs text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200"
                 >
                   Cerrar
@@ -175,6 +186,18 @@ export const TaskInput: React.FC<TaskInputProps> = ({
                 </button>
               </div>
             </div>
+
+            {/* Notes textarea: ONLY rendered if user explicitly clicked '+ Nota' or has notes text */}
+            {(showNotes || notes) && (
+              <textarea
+                value={notes}
+                onChange={e => setNotes(e.target.value)}
+                placeholder="Escribe tu nota aquí..."
+                rows={2}
+                autoFocus
+                className="w-full p-2 text-xs bg-zinc-50 dark:bg-zinc-900/50 rounded-xl border border-zinc-200/60 dark:border-zinc-800 text-zinc-800 dark:text-zinc-200 placeholder-zinc-400 focus:outline-none focus:ring-1 focus:ring-zinc-400 animate-in fade-in duration-100"
+              />
+            )}
           </div>
         )}
       </form>

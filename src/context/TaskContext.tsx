@@ -8,6 +8,7 @@ import { getTodayDateString } from '../utils/date';
 
 interface TaskContextType {
   tasks: Task[];
+  backlogTasks: Task[];
   somedayTasks: Task[];
   completedTasks: Task[];
   todayTasks: Task[];
@@ -169,6 +170,11 @@ export const TaskProvider: React.FC<{ children: React.ReactNode }> = ({ children
       .filter(s => s.selectedDate === todayDate && !s.deletedAt)
       .sort((a, b) => a.sortOrder - b.sortOrder);
   }, [dailySelections, todayDate]);
+
+  const backlogTasks = useMemo(() => {
+    const todayTaskIds = new Set(todaySelections.map(s => s.taskId));
+    return tasks.filter(t => !todayTaskIds.has(t.id));
+  }, [tasks, todaySelections]);
 
   const todayTasks = useMemo(() => {
     const taskMap = new Map(allTasks.map(t => [t.id, t]));
@@ -403,6 +409,7 @@ export const TaskProvider: React.FC<{ children: React.ReactNode }> = ({ children
     <TaskContext.Provider
       value={{
         tasks,
+        backlogTasks,
         somedayTasks,
         completedTasks,
         todayTasks,
