@@ -11,9 +11,36 @@ test.describe('Kanso Tasks Minimalist App E2E', () => {
     await page.reload();
   });
 
-  test('Criterio: Vista unificada con Hoy arriba y Lista Maestra abajo', async ({ page }) => {
+  test('Criterio: Vista unificada con Hoy arriba y Lista Maestra abajo (sin tabs ni búsqueda)', async ({ page }) => {
     await expect(page.getByTestId('today-section')).toBeVisible();
     await expect(page.getByTestId('backlog-section')).toBeVisible();
+    await expect(page.getByTestId('toggle-history-btn')).toBeVisible();
+  });
+
+  test('Smart Tags con #: agregar con #hoy, #mañana y #someday por teclado', async ({ page }) => {
+    const taskInput = page.getByTestId('task-input');
+
+    // 1. Tarea con #hoy debe ir directamente a la sección Hoy arriba
+    await taskInput.fill('Hacer compras del súper #hoy');
+    await taskInput.press('Enter');
+    await expect(taskInput).toHaveValue('');
+    await expect(page.getByTestId('today-section').getByText('Hacer compras del súper')).toBeVisible();
+
+    // 2. Tarea con #mañana debe mostrar el badge de fecha Mañana
+    await taskInput.fill('Renovar póliza de seguro #mañana');
+    await taskInput.press('Enter');
+    await expect(taskInput).toHaveValue('');
+    await expect(page.getByTestId('backlog-section').getByText('Renovar póliza de seguro')).toBeVisible();
+    await expect(page.getByText('Mañana')).toBeVisible();
+
+    // 3. Tarea con #someday debe ir a la lista de Algún Día
+    await taskInput.fill('Aprender a tocar violín #someday');
+    await taskInput.press('Enter');
+    await expect(taskInput).toHaveValue('');
+
+    // Cambiar a pestaña Algún día
+    await page.getByRole('button', { name: /Algún día/i }).click();
+    await expect(page.getByText('Aprender a tocar violín')).toBeVisible();
   });
 
   test('Criterios 1 y 2: Agregar tareas sin fecha y elegir 5 para Hoy con un clic', async ({ page }) => {
@@ -98,7 +125,7 @@ test.describe('Kanso Tasks Minimalist App E2E', () => {
     await expect(page.getByTestId('backlog-section').getByText('Tarea para quitar')).toBeVisible();
   });
 
-  test('Criterio 6: Si completo una tarea, aparece en Completadas / Historial y se puede restaurar', async ({ page }) => {
+  test('Criterio 6: Si completo una tarea, aparece en el Historial del fondo y se puede restaurar', async ({ page }) => {
     const taskInput = page.getByTestId('task-input');
     await taskInput.fill('Tarea para completar');
     await taskInput.press('Enter');
@@ -107,17 +134,14 @@ test.describe('Kanso Tasks Minimalist App E2E', () => {
     const checkbox = page.getByTestId('backlog-section').getByTestId('btn-toggle-complete').first();
     await checkbox.click();
 
-    // Abrir Historial
-    await page.getByTestId('tab-history').click();
+    // Abrir Historial en el fondo
+    await page.getByTestId('toggle-history-btn').click();
 
-    // Debe estar en Historial
-    await expect(page.getByText('Tarea para completar')).toBeVisible();
+    // Debe estar en el Historial
+    await expect(page.getByTestId('history-section').getByText('Tarea para completar')).toBeVisible();
 
     // Restaurar tarea
-    await page.getByRole('button', { name: 'Restaurar' }).first().click();
-
-    // Volver a la vista de Tareas
-    await page.getByTestId('tab-tasks').click();
+    await page.getByTestId('btn-restore-task').first().click();
 
     // Debe volver a estar en la Lista Maestra
     await expect(page.getByTestId('backlog-section').getByText('Tarea para completar')).toBeVisible();
@@ -128,6 +152,7 @@ test.describe('Kanso Tasks Minimalist App E2E', () => {
     const input = page.getByTestId('task-input');
     await input.fill(uniqueTitle);
     await input.press('Enter');
+    await expect(input).toHaveValue('');
 
     await expect(page.getByText(uniqueTitle)).toBeVisible();
 
