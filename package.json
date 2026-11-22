@@ -9,6 +9,9 @@
     "preview": "vite preview",
     "cap:sync": "npm run build && npx cap sync android",
     "cap:open": "npx cap open android",
+    "build:android": "npm run build && npx cap sync android && cd android && JAVA_HOME=/opt/homebrew/opt/openjdk@21 ./gradlew bundleRelease",
+    "deploy:internal": "node scripts/publish-playstore.mjs internal",
+    "deploy:alpha": "node scripts/publish-playstore.mjs alpha",
     "test:e2e": "playwright test"
   },
   "dependencies": {
