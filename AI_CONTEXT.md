@@ -37,13 +37,11 @@
 ├── src/
 │   ├── components/
 │   │   ├── AuthModal.tsx      # Email auth dialog for cross-device sync
-│   │   ├── BacklogView.tsx    # Master backlog list (search, DnD, someday toggle)
 │   │   ├── Header.tsx         # Responsive header, sync indicator, theme toggle
 │   │   ├── HistoryView.tsx    # Simple completed task list with restore action
-│   │   ├── MobileNavigation.tsx # Bottom navigation bar for mobile view
-│   │   ├── TaskInput.tsx      # Instant capture input (Enter key handler)
-│   │   ├── TaskItem.tsx       # Task row with discrete badges and actions
-│   │   └── TodayView.tsx      # Focus chain ("Mi Día") with progress counter
+│   │   ├── TaskInput.tsx      # Instant capture input, # hashtag autocomplete popover, notes toggle
+│   │   ├── TaskItem.tsx       # Task row with discrete badges (+ Hoy, Quitar, Date)
+│   │   └── UnifiedTaskView.tsx# Single continuous stream (Mi Día on top, Master List below, History at bottom)
 │   ├── context/
 │   │   └── TaskContext.tsx    # Root React context, optimistic mutations, midnight rollover
 │   ├── services/
@@ -54,7 +52,8 @@
 │   │   └── index.ts           # Type definitions (Task, DailySelection, SyncMutation)
 │   └── utils/
 │       ├── date.ts            # Local YYYY-MM-DD formatting, rollover & relative dates
-│       └── id.ts              # 15-char lowercase alphanumeric ID generator [a-z0-9]{15}
+│       ├── id.ts              # 15-char lowercase alphanumeric ID generator [a-z0-9]{15}
+│       └── naturalDate.ts     # Zero-dependency natural language parser (#hoy, #mañana, #en 15 dias, #nota)
 ├── capacitor.config.ts        # Capacitor configuration (appId: com.kanso.tasks)
 ├── playwright.config.ts       # Playwright E2E configuration on port 5180
 ├── supabase-schema.sql        # Supabase schema + RLS policies
