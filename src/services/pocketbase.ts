@@ -1,4 +1,6 @@
 import PocketBase from 'pocketbase';
+import { Capacitor } from '@capacitor/core';
+import { Browser } from '@capacitor/browser';
 import type { Task, DailySelection, UserSession } from '../types';
 
 const defaultUrl = import.meta.env.VITE_POCKETBASE_URL || 'https://pleasant-pelican-present.ngrok-free.app';
@@ -46,6 +48,30 @@ export const pocketbaseService = {
       passwordConfirm: password
     });
     return this.login(email, password);
+  },
+
+  async loginWithGoogle(): Promise<UserSession> {
+    const isNative = Capacitor.isNativePlatform();
+    const authData = await pb.collection('users').authWithOAuth2({
+      provider: 'google',
+      urlCallback: isNative
+        ? async (url: string) => {
+            await Browser.open({ url, windowName: '_system' });
+          }
+        : undefined
+    });
+
+    if (isNative) {
+      await Browser.close().catch(() => {});
+    }
+
+    return {
+      id: authData.record.id,
+      email: authData.record.email,
+      name: authData.record.name,
+      token: authData.token,
+      isGuest: false
+    };
   },
 
   logout(): void {

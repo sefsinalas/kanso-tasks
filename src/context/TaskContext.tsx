@@ -35,6 +35,7 @@ interface TaskContextType {
   reorderBacklog: (activeId: string, overId: string) => Promise<void>;
   reorderToday: (activeId: string, overId: string) => Promise<void>;
   login: (email: string, pass: string) => Promise<void>;
+  loginWithGoogle: () => Promise<void>;
   register: (email: string, pass: string) => Promise<void>;
   logout: () => void;
   syncNow: () => Promise<void>;
@@ -384,6 +385,13 @@ export const TaskProvider: React.FC<{ children: React.ReactNode }> = ({ children
     await loadData();
   };
 
+  const loginWithGoogle = async (): Promise<void> => {
+    const session = await pocketbaseService.loginWithGoogle();
+    setUser(session);
+    await syncService.syncAll();
+    await loadData();
+  };
+
   const register = async (email: string, pass: string): Promise<void> => {
     const session = await pocketbaseService.register(email, pass);
     setUser(session);
@@ -436,6 +444,7 @@ export const TaskProvider: React.FC<{ children: React.ReactNode }> = ({ children
         reorderBacklog,
         reorderToday,
         login,
+        loginWithGoogle,
         register,
         logout,
         syncNow

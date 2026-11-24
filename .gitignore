@@ -13,6 +13,7 @@ blob-report/
 
 # Environment variables
 .env
+.netlify/
 .env.local
 .env.*.local
 
@@ -42,3 +43,4 @@ Thumbs.db
 *.sw?
 .gurrudesk/
 .worktrees/
+scripts/configure-pocketbase-oauth.js
