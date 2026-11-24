@@ -19,12 +19,9 @@ export const AuthModal: React.FC<AuthModalProps> = ({ onClose }) => {
     setLoading(true);
     try {
       await loginWithGoogle();
-      onClose();
     } catch (err: any) {
       console.error(err);
-      if (err?.isAbort) return;
       setError(err?.message || 'Error al autenticar con Google.');
-    } finally {
       setLoading(false);
     }
   };

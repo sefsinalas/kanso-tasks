@@ -50,20 +50,44 @@ export const pocketbaseService = {
     return this.login(email, password);
   },
 
-  async loginWithGoogle(): Promise<UserSession> {
-    const isNative = Capacitor.isNativePlatform();
-    const authData = await pb.collection('users').authWithOAuth2({
-      provider: 'google',
-      urlCallback: isNative
-        ? async (url: string) => {
-            await Browser.open({ url, windowName: '_system' });
-          }
-        : undefined
-    });
+  async loginWithGoogle(): Promise<void> {
+    const authMethods = await pb.collection('users').listAuthMethods();
+    const google = authMethods.oauth2?.providers?.find(p => p.name === 'google');
+    if (!google) throw new Error('Proveedor de Google no configurado en el servidor.');
 
-    if (isNative) {
-      await Browser.close().catch(() => {});
+    const redirectUrl = window.location.origin;
+    localStorage.setItem('kanso_oauth_provider', google.name);
+    localStorage.setItem('kanso_oauth_verifier', google.codeVerifier);
+    localStorage.setItem('kanso_oauth_redirect', redirectUrl);
+
+    const fullAuthUrl = google.authURL + encodeURIComponent(redirectUrl);
+
+    if (Capacitor.isNativePlatform()) {
+      await Browser.open({ url: fullAuthUrl, windowName: '_system' });
+    } else {
+      window.location.href = fullAuthUrl;
     }
+  },
+
+  async handleOAuthCallback(code: string): Promise<UserSession | null> {
+    const providerName = localStorage.getItem('kanso_oauth_provider');
+    const codeVerifier = localStorage.getItem('kanso_oauth_verifier');
+    const redirectUrl = localStorage.getItem('kanso_oauth_redirect');
+
+    if (!providerName || !codeVerifier || !redirectUrl) {
+      return null;
+    }
+
+    localStorage.removeItem('kanso_oauth_provider');
+    localStorage.removeItem('kanso_oauth_verifier');
+    localStorage.removeItem('kanso_oauth_redirect');
+
+    const authData = await pb.collection('users').authWithOAuth2Code(
+      providerName,
+      code,
+      codeVerifier,
+      redirectUrl
+    );
 
     return {
       id: authData.record.id,

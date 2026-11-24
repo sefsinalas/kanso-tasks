@@ -115,6 +115,22 @@ export const TaskProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   // Init auth & sync
   useEffect(() => {
+    // Check OAuth2 redirect code
+    const params = new URLSearchParams(window.location.search);
+    const code = params.get('code');
+    if (code) {
+      window.history.replaceState({}, document.title, window.location.pathname);
+      pocketbaseService.handleOAuthCallback(code).then(async (session) => {
+        if (session) {
+          setUser(session);
+          await syncService.syncAll();
+          await loadData();
+        }
+      }).catch(err => {
+        console.error('Failed to complete OAuth callback:', err);
+      });
+    }
+
     const currentPbUser = pocketbaseService.getCurrentUser();
     if (currentPbUser) {
       setUser(currentPbUser);
@@ -386,10 +402,7 @@ export const TaskProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const loginWithGoogle = async (): Promise<void> => {
-    const session = await pocketbaseService.loginWithGoogle();
-    setUser(session);
-    await syncService.syncAll();
-    await loadData();
+    await pocketbaseService.loginWithGoogle();
   };
 
   const register = async (email: string, pass: string): Promise<void> => {
