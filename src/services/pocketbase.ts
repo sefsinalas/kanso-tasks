@@ -55,14 +55,19 @@ export const pocketbaseService = {
     const google = authMethods.oauth2?.providers?.find(p => p.name === 'google');
     if (!google) throw new Error('Proveedor de Google no configurado en el servidor.');
 
-    const redirectUrl = window.location.origin;
+    const isNative = Capacitor.isNativePlatform();
+    // On native platform, redirect to the production web callback which deep links back into the app
+    const redirectUrl = isNative ? 'https://kanso-tasks.netlify.app' : window.location.origin;
+
     localStorage.setItem('kanso_oauth_provider', google.name);
     localStorage.setItem('kanso_oauth_verifier', google.codeVerifier);
     localStorage.setItem('kanso_oauth_redirect', redirectUrl);
 
-    const fullAuthUrl = google.authURL + encodeURIComponent(redirectUrl);
+    let fullAuthUrl = google.authURL + encodeURIComponent(redirectUrl);
 
-    if (Capacitor.isNativePlatform()) {
+    if (isNative) {
+      // Prefix state with mobile_ so the web callback knows to deep link back to Android app
+      fullAuthUrl = fullAuthUrl.replace(/state=([^&]+)/, 'state=mobile_$1');
       await Browser.open({ url: fullAuthUrl, windowName: '_system' });
     } else {
       window.location.href = fullAuthUrl;

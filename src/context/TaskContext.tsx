@@ -1,4 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react';
+import { App as CapApp } from '@capacitor/app';
+import { Browser } from '@capacitor/browser';
+import { Capacitor } from '@capacitor/core';
 import type { Task, DailySelection, UserSession, ViewFilter, MobileTab } from '../types';
 import { localDb } from '../services/db';
 import { pocketbaseService, pb } from '../services/pocketbase';
@@ -53,6 +56,7 @@ export const TaskProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [syncStatus, setSyncStatus] = useState<string>('idle');
   const [todayDate, setTodayDate] = useState<string>(getTodayDateString());
   const [theme, setTheme] = useState<'light' | 'dark'>('dark');
+  const [mobileRedirectUrl, setMobileRedirectUrl] = useState<string | null>(null);
 
   // Load initial theme
   useEffect(() => {
@@ -118,7 +122,16 @@ export const TaskProvider: React.FC<{ children: React.ReactNode }> = ({ children
     // Check OAuth2 redirect code
     const params = new URLSearchParams(window.location.search);
     const code = params.get('code');
+    const state = params.get('state');
+
     if (code) {
+      if (state && state.startsWith('mobile_')) {
+        const appUrl = `com.kanso.tasks://oauth?code=${encodeURIComponent(code)}`;
+        setMobileRedirectUrl(appUrl);
+        window.location.href = appUrl;
+        return;
+      }
+
       window.history.replaceState({}, document.title, window.location.pathname);
       pocketbaseService.handleOAuthCallback(code).then(async (session) => {
         if (session) {
@@ -159,6 +172,43 @@ export const TaskProvider: React.FC<{ children: React.ReactNode }> = ({ children
       syncService.stopPeriodicSync();
     };
   }, [effectiveUserId, loadData]);
+
+  // Handle native deep link callback from OAuth
+  useEffect(() => {
+    if (!Capacitor.isNativePlatform()) return;
+
+    const handleOAuthUrl = async (rawUrl: string) => {
+      try {
+        const parsed = new URL(rawUrl);
+        if (parsed.protocol === 'com.kanso.tasks:' && (parsed.host === 'oauth' || parsed.pathname.includes('oauth'))) {
+          const code = parsed.searchParams.get('code');
+          if (code) {
+            await Browser.close().catch(() => {});
+            const session = await pocketbaseService.handleOAuthCallback(code);
+            if (session) {
+              setUser(session);
+              await syncService.syncAll();
+              await loadData();
+            }
+          }
+        }
+      } catch (err) {
+        console.error('Failed to parse OAuth URL on native app:', err);
+      }
+    };
+
+    CapApp.getLaunchUrl().then(launch => {
+      if (launch?.url) handleOAuthUrl(launch.url);
+    });
+
+    const sub = CapApp.addListener('appUrlOpen', data => {
+      if (data?.url) handleOAuthUrl(data.url);
+    });
+
+    return () => {
+      sub.then(h => h.remove()).catch(() => {});
+    };
+  }, [loadData]);
 
   // Derived task collections
   const tasks = useMemo(() => {
@@ -425,6 +475,26 @@ export const TaskProvider: React.FC<{ children: React.ReactNode }> = ({ children
     await syncService.syncAll();
     await loadData();
   };
+
+  if (mobileRedirectUrl) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center p-6 bg-paper-light dark:bg-paper-dark text-center select-none">
+        <div className="w-10 h-10 border-2 border-stone-300 border-t-stone-800 dark:border-stone-700 dark:border-t-stone-200 rounded-full animate-spin mb-4" />
+        <h2 className="text-lg font-medium text-stone-900 dark:text-stone-100 mb-2 font-serif">
+          Abriendo Kanso Tasks...
+        </h2>
+        <p className="text-sm text-stone-500 dark:text-stone-400 mb-6 max-w-xs leading-relaxed">
+          Redirigiendo a la app para completar tu inicio de sesión con Google.
+        </p>
+        <a
+          href={mobileRedirectUrl}
+          className="px-4 py-2 bg-stone-900 dark:bg-stone-100 text-stone-100 dark:text-stone-900 rounded-md text-sm font-medium hover:opacity-90 transition-opacity"
+        >
+          Toca aquí si no se abre automáticamente
+        </a>
+      </div>
+    );
+  }
 
   return (
     <TaskContext.Provider
