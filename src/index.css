@@ -34,3 +34,12 @@
 [data-dnd-kit-draggable] {
   touch-action: none;
 }
+
+/* Safe area adjustments for native mobile devices (Android / iOS) */
+.is-native header {
+  padding-top: calc(0.75rem + max(env(safe-area-inset-top, 0px), 28px)) !important;
+}
+
+.is-native main {
+  padding-bottom: calc(2rem + max(env(safe-area-inset-bottom, 0px), 20px)) !important;
+}

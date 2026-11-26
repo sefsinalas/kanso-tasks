@@ -14,6 +14,16 @@
     <script>
       (function() {
         try {
+          const params = new URLSearchParams(window.location.search);
+          const code = params.get('code');
+          const state = params.get('state');
+          if (code && state && state.startsWith('mobile_')) {
+            const appUrl = 'com.kanso.tasks://oauth?code=' + encodeURIComponent(code);
+            window.location.replace(appUrl);
+          }
+        } catch (e) {}
+
+        try {
           const theme = localStorage.getItem('kanso-theme');
           const isDark = theme === 'dark' || (!theme && window.matchMedia('(prefers-color-scheme: dark)').matches);
           if (isDark) {

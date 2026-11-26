@@ -128,7 +128,7 @@ export const TaskProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (state && state.startsWith('mobile_')) {
         const appUrl = `com.kanso.tasks://oauth?code=${encodeURIComponent(code)}`;
         setMobileRedirectUrl(appUrl);
-        window.location.href = appUrl;
+        window.location.replace(appUrl);
         return;
       }
 

@@ -58,7 +58,13 @@ export const AuthModal: React.FC<AuthModalProps> = ({ onClose }) => {
   const pbUrl = import.meta.env.VITE_POCKETBASE_URL || 'https://pleasant-pelican-present.ngrok-free.app';
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in duration-150">
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in duration-150 overflow-y-auto"
+      style={{
+        paddingTop: 'calc(1.5rem + env(safe-area-inset-top, 0px))',
+        paddingBottom: 'calc(1.5rem + env(safe-area-inset-bottom, 0px))'
+      }}
+    >
       <div className="w-full max-w-sm bg-white dark:bg-paper-darkcard rounded-2xl shadow-2xl border border-zinc-200 dark:border-zinc-800 p-6 relative">
         <button
           onClick={onClose}

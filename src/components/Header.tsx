@@ -15,7 +15,10 @@ export const Header: React.FC = () => {
 
   return (
     <>
-      <header className="sticky top-0 z-20 backdrop-blur-md bg-paper-light/80 dark:bg-paper-dark/80 border-b border-zinc-200/60 dark:border-zinc-800/60 px-4 sm:px-8 py-3 transition-colors">
+      <header
+        className="sticky top-0 z-20 backdrop-blur-md bg-paper-light/80 dark:bg-paper-dark/80 border-b border-zinc-200/60 dark:border-zinc-800/60 px-4 sm:px-8 py-3 transition-colors"
+        style={{ paddingTop: 'calc(0.75rem + env(safe-area-inset-top, 0px))' }}
+      >
         <div className="max-w-7xl mx-auto flex items-center justify-between">
           <div className="flex items-baseline gap-3">
             <h1 className="text-xl sm:text-2xl font-light tracking-tight text-zinc-900 dark:text-zinc-50 font-sans">
